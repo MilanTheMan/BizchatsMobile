@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-// signup screen
+
+// Signup screen
 const SignUpScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
@@ -11,7 +12,7 @@ const SignUpScreen = ({ navigation }) => {
       <TextInput style={styles.input} placeholder="Confirm Password" secureTextEntry={true} />
       <TouchableOpacity
         style={styles.signUpButton}
-        onPress={() => navigation.replace('Home')}
+        onPress={() => navigation.replace('HomeScreen')}
       >
         <Text style={styles.signUpButtonText}>SIGN UP</Text>
       </TouchableOpacity>

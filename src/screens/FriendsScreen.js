@@ -59,7 +59,7 @@ const FriendsScreen = () => {
             </View>
             <TouchableOpacity
               style={styles.chatButton}
-              onPress={() => navigation.navigate('MessagingScreen')}
+              onPress={() => navigation.navigate('ChatScreen', { friendName: item.name })}
             >
               <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
             </TouchableOpacity>
@@ -123,4 +123,3 @@ const styles = StyleSheet.create({
 });
 
 export default FriendsScreen;
-

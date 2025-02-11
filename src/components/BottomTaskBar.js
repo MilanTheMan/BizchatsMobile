@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 
-const BottomTaskBar = ({ navigation }) => {
+const BottomTaskBar = ({ navigation, currentClassName }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
+      <TouchableOpacity onPress={() => navigation.navigate('GeneralChatScreen', { className: currentClassName })}>
         <Image source={require('../../assets/chat_icon.png')} style={styles.icon} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Friends')}>
-          <Image source={require('../../assets/meeting.png')} style={styles.icon} />
+        <Image source={require('../../assets/meeting.png')} style={styles.icon} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Tasks')}>
         <Image source={require('../../assets/task.png')} style={styles.icon} />
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   icon: {
     width: 30,
     height: 30,
-    tintColor: '#fff', // Make sure icons blend with the taskbar
+    tintColor: '#fff',
   },
 });
 

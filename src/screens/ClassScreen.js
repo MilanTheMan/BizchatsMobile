@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BottomTaskBar from '../components/BottomTaskBar';
-// class screen
+
 const ClassScreen = ({ route, navigation }) => {
   const { className } = route.params;
 
@@ -55,8 +55,8 @@ const ClassScreen = ({ route, navigation }) => {
         keyExtractor={(item) => item.id}
       />
 
-      {/* Bottom Taskbar */}
-      <BottomTaskBar navigation={navigation} />
+      {/* Bottom Taskbar - Pass Current Class Name */}
+      <BottomTaskBar navigation={navigation} currentClassName={className} />
     </View>
   );
 };

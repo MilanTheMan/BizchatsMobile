@@ -6,23 +6,23 @@ import SignUpScreen from './src/screens/SignUpScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ClassScreen from './src/screens/ClassScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import MessagingScreen from './src/screens/MessagingScreen';
 import GradesScreen from './src/screens/GradesScreen';
-import TaskScreen from './src/screens/TaskScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 
+// Create a stack navigator
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
-
+        {/* Login Screen */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ headerShown: false }}
+          options={{ headerShown: false }} // Hide header for LoginScreen
         />
+        {/* SignUp Screen with Back Button */}
         <Stack.Screen
           name="SignUp"
           component={SignUpScreen}
@@ -33,14 +33,11 @@ export default function App() {
             headerTitleStyle: { fontWeight: 'bold' },
           }}
         />
+        {/* Other Screens */}
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Class" component={ClassScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
-
-        <Stack.Screen name="MessagingScreen" component={MessagingScreen} />
-        <Stack.Screen name="Chat" component={MessagingScreen} />
         <Stack.Screen name="Marks" component={GradesScreen} />
-        <Stack.Screen name="Tasks" component={TaskScreen} />
         <Stack.Screen name="Friends" component={FriendsScreen} />
       </Stack.Navigator>
     </NavigationContainer>

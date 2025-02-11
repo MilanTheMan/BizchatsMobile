@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-// login screen
+
+// Login screen
 const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
@@ -9,7 +10,7 @@ const LoginScreen = ({ navigation }) => {
       <TextInput style={styles.input} placeholder="Password" secureTextEntry={true} />
       <TouchableOpacity
         style={styles.loginButton}
-        onPress={() => navigation.replace('Home')} // Redirect to HomeScreen
+        onPress={() => navigation.replace('HomeScreen')}
       >
         <Text style={styles.loginButtonText}>LOG IN</Text>
       </TouchableOpacity>

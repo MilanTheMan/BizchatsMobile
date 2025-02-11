@@ -1,7 +1,21 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 
-const HomeScreen = ({ navigation }) => {
+const PersonalScreen = ({ navigation }) => {
+  const classes = [
+    { id: '1', name: 'Ω Omega', members: '250 Members', image: require('../../assets/omegabanner.png') },
+    { id: '2', name: 'The Boys', members: '33 Boys', image: require('../../assets/mountain.png') },
+    { id: '3', name: 'Torontonians', members: '11056 Students', image: require('../../assets/toronto.png') },
+  ];
+
+  const renderClass = (item) => (
+    <TouchableOpacity key={item.id} style={styles.card}>
+      <Image source={item.image} style={styles.cardImage} />
+      <Text style={styles.cardTitle}>{item.name}</Text>
+      <Text style={styles.cardSubtitle}>{item.members}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -18,42 +32,11 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       {/* Title Section */}
-      <Text style={styles.sectionTitle}>How will you use BizChats?</Text>
+      <Text style={styles.sectionTitle}>Your Classes:</Text>
 
-      {/* Categories */}
-      <View style={styles.categoriesContainer}>
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('PersonalScreen')}
-        >
-          <Image
-            source={require('../../assets/personal.png')}
-            style={styles.cardImage}
-          />
-          <Text style={styles.cardText}>Personal</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('EducationalScreen')}
-        >
-          <Image
-            source={require('../../assets/educational.png')}
-            style={styles.cardImage}
-          />
-          <Text style={styles.cardText}>Educational</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('ProfessionalScreen')}
-        >
-          <Image
-            source={require('../../assets/professional.png')}
-            style={styles.cardImage}
-          />
-          <Text style={styles.cardText}>Professional</Text>
-        </TouchableOpacity>
+      {/* Class List */}
+      <View style={styles.classesContainer}>
+        {classes.map(renderClass)}
       </View>
     </View>
   );
@@ -89,8 +72,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Categories Container
-  categoriesContainer: {
+  // Classes Container
+  classesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
@@ -102,20 +85,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
   },
-  cardImage: { width: 60, height: 60, marginBottom: 10 },
-  cardText: {
+  cardImage: { width: '100%', height: 100, borderRadius: 10 },
+  cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginTop: 10,
     textAlign: 'center',
-    color: '#333',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
   },
 });
 
-export default HomeScreen;
+export default PersonalScreen;
