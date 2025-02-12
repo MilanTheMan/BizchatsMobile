@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
 
   header: {
-    backgroundColor: '#34A853',
+    backgroundColor: '#007AFF', // 🔹 Changed header color to blue
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 10,

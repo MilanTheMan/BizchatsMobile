@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/COMP3074-Project-prototype.iml" filepath="$PROJECT_DIR$/.idea/COMP3074-Project-prototype.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/bizchats_mobile_application.iml" filepath="$PROJECT_DIR$/.idea/bizchats_mobile_application.iml" />
     </modules>
   </component>
 </project>
