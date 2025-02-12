@@ -10,8 +10,8 @@ const BottomTaskBar = ({ navigation, currentClassName }) => {
       <TouchableOpacity onPress={() => navigation.navigate('Friends')}>
         <Image source={require('../../assets/meeting.png')} style={styles.icon} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Tasks')}>
-        <Image source={require('../../assets/task.png')} style={styles.icon} />
+      <TouchableOpacity onPress={() => navigation.navigate('AssignmentsScreen', { className: currentClassName })}>
+        <Image source={require('../../assets/assignments.png')} style={styles.icon} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Marks')}>
         <Image source={require('../../assets/marks.png')} style={styles.icon} />

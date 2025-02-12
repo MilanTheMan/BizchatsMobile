@@ -11,7 +11,7 @@ const ClassScreen = ({ route, navigation }) => {
       title: 'Assignment two has been posted',
       date: 'Nov 10th 2024',
       details: 'Due: Nov 29th 2024  Weight: 20%',
-      icon: require('../../assets/task.png'),
+      icon: require('../../assets/assignments.png'),
     },
     {
       id: '2',
