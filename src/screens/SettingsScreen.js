@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = () => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
@@ -14,28 +15,46 @@ const SettingsScreen = () => {
 
   const loadUserData = async () => {
     try {
-      const storedEmail = await AsyncStorage.getItem('userEmail');
-      const storedPassword = await AsyncStorage.getItem('userPassword');
+      const storedEmail = await AsyncStorage.getItem('currentUserEmail');
+      const storedUsername = await AsyncStorage.getItem('currentUserUsername');
+      const storedPassword = await AsyncStorage.getItem(`password_${storedEmail}`);
+
       if (storedEmail) setEmail(storedEmail);
+      if (storedUsername) setUsername(storedUsername);
       if (storedPassword) setPassword(storedPassword);
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
   };
 
-  const handleSave = async () => {
+  const handleUpdate = async () => {
     try {
-      await AsyncStorage.setItem('userEmail', email);
-      await AsyncStorage.setItem('userPassword', password);
-      Alert.alert('Success', 'Settings saved successfully!');
+      if (!username.trim() || !email.trim() || !password.trim()) {
+        Alert.alert('Error', 'All fields must be filled.');
+        return;
+      }
+
+      await AsyncStorage.setItem('currentUserEmail', email);
+      await AsyncStorage.setItem('currentUserUsername', username);
+      await AsyncStorage.setItem(`password_${email}`, password);
+
+      Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
-      console.error('Error saving user info:', error);
+      console.error('Error updating user info:', error);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Settings</Text>
+
+      <Text style={styles.label}>Username:</Text>
+      <TextInput
+        style={styles.input}
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Enter your username"
+      />
 
       <Text style={styles.label}>Email:</Text>
       <TextInput
@@ -54,8 +73,8 @@ const SettingsScreen = () => {
         placeholder="Enter your password"
       />
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save</Text>
+      <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+        <Text style={styles.updateButtonText}>Update</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -67,7 +86,10 @@ const SettingsScreen = () => {
 
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigation.navigate('Login')}
+        onPress={async () => {
+          await AsyncStorage.clear();
+          navigation.replace('Login');
+        }}
       >
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
@@ -87,14 +109,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 20,
   },
-  saveButton: {
+  updateButton: {
     backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
   },
-  saveButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  updateButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   friendsButton: {
     backgroundColor: '#34A853',
     padding: 15,

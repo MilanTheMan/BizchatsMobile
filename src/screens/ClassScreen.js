@@ -33,7 +33,7 @@ const ClassScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>{className}</Text>
+        <Text style={styles.headerText}>{className} Grades</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.settingsIcon}>
           <Image source={require('../../assets/settings.png')} style={styles.icon} />
         </TouchableOpacity>
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
 
   // Header Styling
   header: {
-    backgroundColor: '#34A853',
+    backgroundColor: '#007AFF', // Changed to blue
     paddingVertical: 15,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     alignItems: 'center',
   },
-  cardIcon: { width: 50, height: 50, marginRight: 15, tintColor: '#34A853' },
+  cardIcon: { width: 50, height: 50, marginRight: 15, tintColor: '#007AFF' }, // Changed tint color to blue
   cardContent: { flex: 1 },
   title: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   date: { fontSize: 14, color: '#666', marginBottom: 5 },

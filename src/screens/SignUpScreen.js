@@ -14,10 +14,14 @@ const SignUpScreen = ({ navigation }) => {
     }
 
     try {
+      // Store user data
       await AsyncStorage.setItem(`username_${email}`, username);
       await AsyncStorage.setItem(`password_${email}`, password);
-      Alert.alert('Success', 'Account created! You can now log in.');
-      navigation.replace('Login');
+      await AsyncStorage.setItem('currentUserEmail', email);
+      await AsyncStorage.setItem('currentUserUsername', username);
+
+      Alert.alert('Success', 'Account created! Redirecting to Home...');
+      navigation.replace('HomeScreen'); // Redirect to Home directly
     } catch (error) {
       console.error('Signup error:', error);
       Alert.alert('Error', 'An error occurred while signing up');

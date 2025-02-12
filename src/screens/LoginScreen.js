@@ -29,10 +29,12 @@ const LoginScreen = ({ navigation }) => {
     try {
       const storedPassword = await AsyncStorage.getItem(`password_${email}`);
       if (storedPassword === password) {
+        // Save current user session
         await AsyncStorage.setItem('currentUserEmail', email);
         await AsyncStorage.setItem('currentUserUsername', username);
+
         console.log('Login successful');
-        navigation.replace('HomeScreen');
+        navigation.replace('HomeScreen'); // Redirect to Home
       } else {
         Alert.alert('Error', 'Invalid credentials');
       }

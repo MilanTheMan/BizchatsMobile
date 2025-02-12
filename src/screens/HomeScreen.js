@@ -11,10 +11,13 @@ const HomeScreen = ({ navigation }) => {
           style={styles.logo}
         />
         <Text style={styles.headerText}>Welcome to BizChats</Text>
-        <Image
-          source={require('../../assets/profile_icon.png')}
-          style={styles.profileIcon}
-        />
+
+        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+          <Image
+            source={require('../../assets/profile_icon.png')}
+            style={styles.profileIcon}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Title Section */}
