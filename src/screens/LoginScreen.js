@@ -1,69 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import sqlService from '../../services/sqlService';
+import { UserContext } from '../../context/UserContext';
 
 const LoginScreen = ({ navigation }) => {
+  const { setUser } = useContext(UserContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedUsername = await AsyncStorage.getItem(`username_${email}`);
-        if (storedUsername) setUsername(storedUsername);
-      } catch (error) {
-        console.error('Error retrieving username:', error);
-      }
-    };
-
-    if (email) fetchUserData();
-  }, [email]); // Runs when email is updated
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
-
-    try {
-      const storedPassword = await AsyncStorage.getItem(`password_${email}`);
-      if (storedPassword === password) {
-        // Save current user session
-        await AsyncStorage.setItem('currentUserEmail', email);
-        await AsyncStorage.setItem('currentUserUsername', username);
-
-        console.log('Login successful');
-        navigation.replace('HomeScreen'); // Redirect to Home
-      } else {
-        Alert.alert('Error', 'Invalid credentials');
+      if (!email.trim() || !password.trim()) {
+          Alert.alert('Error', 'Please enter email and password');
+          return;
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'An error occurred while logging in');
-    }
+
+      try {
+          const response = await sqlService.login({ email, password });
+
+          if (response.success) {
+              setUser(response.data);
+              Alert.alert('Success', 'Login successful!');
+              navigation.replace('HomeScreen');
+          } else {
+              Alert.alert('Error', response.message || 'Login failed');
+          }
+      } catch (error) {
+          console.error('Login error:', error);
+          Alert.alert('Error', 'An error occurred during login');
+      }
   };
+
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Log In</Text>
 
       <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-      />
+      <TextInput style={styles.input} placeholder="Enter your email" value={email} onChangeText={setEmail} />
 
       <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter your password"
         value={password}
-        secureTextEntry={true}
+        secureTextEntry={!showPassword}
         onChangeText={setPassword}
       />
+      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+        <Text style={styles.togglePassword}>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>LOG IN</Text>
@@ -84,6 +70,7 @@ const styles = StyleSheet.create({
   loginButton: { backgroundColor: '#007AFF', padding: 15, borderRadius: 5, width: '90%', alignItems: 'center', marginTop: 20 },
   loginButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   signUpText: { marginTop: 20, color: '#007AFF', fontSize: 14 },
+  togglePassword: { color: '#007AFF', fontSize: 14, marginTop: 10 },
 });
 
 export default LoginScreen;

@@ -1,9 +1,7 @@
-const env = process.env.REACT_APP_ENV;
+import { API_URL } from '@env';
 
 const serverConstants = {
-    baseURL: env === 'production' ? 'https://3.82.202.242' :
-        env === 'staging' ? 'https://' :
-            'http://localhost:8080' // Default to local
+    baseURL: API_URL
 };
 
 export default serverConstants;

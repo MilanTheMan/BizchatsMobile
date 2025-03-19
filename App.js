@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { UserProvider } from './context/UserContext';
 
 import LoginScreen from './src/screens/LoginScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
@@ -21,6 +22,7 @@ const Stack = createStackNavigator();
 
 export default function App() {
   return (
+  <UserProvider>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         {/* Login Screen */}
@@ -47,5 +49,6 @@ export default function App() {
         <Stack.Screen name="Friends" component={FriendsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+    </UserProvider>
   );
 }

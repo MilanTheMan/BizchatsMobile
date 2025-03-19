@@ -1,27 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import sqlService from '../../services/sqlService';
+import { UserContext } from '../../context/UserContext';
 
 const SignUpScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('');
+  const { setUser } = useContext(UserContext);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSignUp = async () => {
-    if (!username.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
 
-    try {
-      // Store user data
-      await AsyncStorage.setItem(`username_${email}`, username);
-      await AsyncStorage.setItem(`password_${email}`, password);
-      await AsyncStorage.setItem('currentUserEmail', email);
-      await AsyncStorage.setItem('currentUserUsername', username);
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
 
-      Alert.alert('Success', 'Account created! Redirecting to Home...');
-      navigation.replace('HomeScreen'); // Redirect to Home directly
+    try {
+      const response = await sqlService.signup({
+        name,
+        email,
+        password,
+        role_id: 1,
+        profile_picture: null
+      });
+
+      if (response.success) {
+        setUser(response.data);
+        Alert.alert('Success', 'Account created! Redirecting to Home...');
+        navigation.replace('HomeScreen');
+      } else {
+        Alert.alert('Error', response.message || 'Signup failed');
+      }
     } catch (error) {
       console.error('Signup error:', error);
       Alert.alert('Error', 'An error occurred while signing up');
@@ -32,30 +47,17 @@ const SignUpScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your username"
-        value={username}
-        onChangeText={setUsername}
-      />
+      <Text style={styles.label}>Name</Text>
+      <TextInput style={styles.input} placeholder="Enter your name" value={name} onChangeText={setName} />
 
       <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-      />
+      <TextInput style={styles.input} placeholder="Enter your email" value={email} onChangeText={setEmail} />
 
       <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your password"
-        value={password}
-        secureTextEntry={true}
-        onChangeText={setPassword}
-      />
+      <TextInput style={styles.input} placeholder="Enter your password" value={password} secureTextEntry onChangeText={setPassword} />
+
+      <Text style={styles.label}>Confirm Password</Text>
+      <TextInput style={styles.input} placeholder="Confirm your password" value={confirmPassword} secureTextEntry onChangeText={setConfirmPassword} />
 
       <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
         <Text style={styles.signUpButtonText}>SIGN UP</Text>

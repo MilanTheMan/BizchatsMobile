@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const UserContext = createContext();
 
@@ -6,15 +7,18 @@ export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='));
-        if (userCookie) {
+        const loadUser = async () => {
             try {
-                const userData = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
-                setUser(userData);
+                const storedUser = await AsyncStorage.getItem('user');
+                if (storedUser) {
+                    setUser(JSON.parse(storedUser));
+                }
             } catch (error) {
-                console.error('Failed to parse user cookie:', error);
+                console.error('Failed to load user from storage:', error);
             }
-        }
+        };
+
+        loadUser();
     }, []);
 
     return (

@@ -1,13 +1,11 @@
-function getUserFromCookie() {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('user='));
-    if (!cookie) {
-        return null;
-    }
-    const user = cookie.split('=')[1];
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+async function getUserFromStorage() {
     try {
-        return JSON.parse(user);
+        const user = await AsyncStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
     } catch (e) {
-        console.error('Failed to parse user cookie:', e);
+        console.error('Failed to retrieve user from storage:', e);
         return null;
     }
 }
@@ -17,4 +15,4 @@ function serverResponseErrActions(err) {
     console.error(err);
 }
 
-export { getUserFromCookie, serverResponseErrActions };
+export { getUserFromStorage, serverResponseErrActions };
