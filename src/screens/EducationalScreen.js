@@ -32,14 +32,12 @@ const EducationalScreen = ({ navigation }) => {
     fetchChannels();
   }, []);
 
-  // Open modal for input (Create or Join)
   const openModal = (type) => {
     setModalType(type);
     setInputValue("");
     setModalVisible(true);
   };
 
-  // Handle submission of Create or Join action
   const handleSubmit = async () => {
     if (!inputValue.trim()) {
       Alert.alert("Error", modalType === "create" ? "Channel name cannot be empty." : "Channel ID cannot be empty.");
@@ -77,16 +75,18 @@ const EducationalScreen = ({ navigation }) => {
   };
 
   const renderChannel = ({ item }) => {
-    let imageUri = require('../../assets/math.png'); // Default image
+    let imageUri = require('../../assets/math.png');
 
-    // ✅ Convert binary Buffer to Base64 URI (if present)
     if (item.profile_picture && item.profile_picture.data) {
       const base64Image = Buffer.from(item.profile_picture.data).toString('base64');
       imageUri = { uri: `data:image/jpeg;base64,${base64Image}` };
     }
 
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('Class', { className: item.name, classId: item.id })}
+      >
         <Image source={imageUri} style={styles.image} />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{item.name}</Text>
@@ -117,13 +117,12 @@ const EducationalScreen = ({ navigation }) => {
           data={channels}
           renderItem={renderChannel}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          numColumns={2} // ✅ Display in grid format (2 columns)
+          numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
         />
       )}
 
-      {/* Buttons for Creating and Joining Channels */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.createButton} onPress={() => openModal("create")}>
           <Text style={styles.buttonText}>+ Create Channel</Text>
@@ -134,7 +133,6 @@ const EducationalScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Modal for Input */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>

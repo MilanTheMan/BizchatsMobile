@@ -270,6 +270,56 @@ async function getUserById(userId) {
             });
     });
 }
+// Fetch user's friends
+async function getFriends(userId) {
+    return new Promise((resolve, reject) => {
+        axios
+            .post(`${serverConstants.baseURL}/getFriends`, { userId })
+            .then((response) => {
+                console.log("📡 API Response (getFriends):", response.data);
+                resolve(response.data.data || []);
+            })
+            .catch((err) => {
+                console.error("❌ Error fetching friends:", err.response?.data || err.message);
+                serverResponseErrActions(err);
+                reject(err);
+            });
+    });
+}
+
+// Add a new friend
+async function addFriend(data) {
+    return new Promise((resolve, reject) => {
+        axios
+            .post(`${serverConstants.baseURL}/addFriend`, data)
+            .then((response) => {
+                console.log("✅ Friend added successfully:", response.data);
+                resolve(response.data);
+            })
+            .catch((err) => {
+                console.error("❌ Error adding friend:", err.response?.data || err.message);
+                serverResponseErrActions(err);
+                reject(err);
+            });
+    });
+}
+
+// Delete a friend
+async function deleteFriend(data) {
+    return new Promise((resolve, reject) => {
+        axios
+            .post(`${serverConstants.baseURL}/deleteFriend`, data)
+            .then((response) => {
+                console.log("✅ Friend deleted successfully:", response.data);
+                resolve(response.data);
+            })
+            .catch((err) => {
+                console.error("❌ Error deleting friend:", err.response?.data || err.message);
+                serverResponseErrActions(err);
+                reject(err);
+            });
+    });
+}
 
 // Export all functions
 const sqlService = {
@@ -278,6 +328,9 @@ const sqlService = {
     logout,
     getAllUsers,
     getUserChannels,
+    getFriends,
+    addFriend,
+    deleteFriend,
     createChannel,
     joinChannel,
     getChannelById,
