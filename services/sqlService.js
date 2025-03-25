@@ -16,20 +16,14 @@ async function getUserFromStorage() {
     }
 }
 
-
-
-// Login function
+// Auth
 async function login(data = {}) {
     try {
         const response = await axios.post(`${serverConstants.baseURL}/login`, data);
-
         if (response.data && response.data.data) {
             let userData = response.data.data;
             delete userData.password;
-
-            // ✅ Store user session in AsyncStorage
             await AsyncStorage.setItem('user', JSON.stringify(userData));
-
             return { success: true, data: userData };
         } else {
             throw new Error("Invalid response format");
@@ -41,32 +35,21 @@ async function login(data = {}) {
     }
 }
 
-
-// Signup function
 async function signup(data = {}) {
     try {
-        console.log("📤 Sending signup request:", data);
-
         const response = await axios.post(`${serverConstants.baseURL}/signup`, data, {
             headers: { "Content-Type": "application/json" }
         });
-
-        console.log("✅ Signup success response:", response.data);
-
         if (response.data && response.data.data) {
             let userData = response.data.data;
             delete userData.password;
-
-            // Store user session in AsyncStorage
             await AsyncStorage.setItem('user', JSON.stringify(userData));
-
             return { success: true, data: userData };
         } else {
             throw new Error("Invalid response format");
         }
     } catch (error) {
-        console.error("❌ Signup Error:", error.response?.data || error.message);
-
+        console.error("Signup Error:", error.response?.data || error.message);
         return {
             success: false,
             message: error.response?.data?.message || "Signup failed. Please try again."
@@ -74,9 +57,6 @@ async function signup(data = {}) {
     }
 }
 
-
-
-// Logout function
 async function logout() {
     try {
         await AsyncStorage.removeItem('user');
@@ -85,252 +65,233 @@ async function logout() {
     }
 }
 
-// Fetch all users
+// User & Friends
 async function getAllUsers(data = {}) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let user = await getUserFromStorage();
-            if (!data.user) {
-                data["user"] = user;
-            }
-            axios
-                .post(`${serverConstants.baseURL}/getAllUsers`, { "data": data })
-                .then((response) => {
-                    resolve(response.data);
-                })
-                .catch((err) => {
-                    serverResponseErrActions(err);
-                    reject(err);
-                });
-        } catch (err) {
-            reject(err);
-        }
-    });
+    try {
+        const user = await getUserFromStorage();
+        if (!data.user) data.user = user;
+        const response = await axios.post(`${serverConstants.baseURL}/getAllUsers`, { data });
+        return response.data;
+    } catch (err) {
+        serverResponseErrActions(err);
+        throw err;
+    }
 }
 
-// Fetch user channels
-async function getUserChannels(userId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getUserChannels`, { userId })
-            .then((response) => {
-                console.log("📡 API Response (getUserChannels):", response.data);
-                resolve(response.data.data || []);
-            })
-            .catch((err) => {
-                console.error("❌ Error fetching channels:", err.response?.data || err.message);
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-
-// Create a new channel
-async function createChannel(data = {}) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let user = await getUserFromStorage();
-            if (!data.userId) {
-                data["userId"] = user.id;
-            }
-
-
-            if (!data.role_id) {
-                data["role_id"] = 1;
-            }
-
-            axios
-                .post(`${serverConstants.baseURL}/createChannel`, data)
-                .then((response) => resolve(response.data))
-                .catch((err) => {
-                    serverResponseErrActions(err);
-                    reject(err);
-                });
-        } catch (err) {
-            reject(err);
-        }
-    });
-}
-
-
-// Join a channel
-async function joinChannel(data = {}) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/joinChannel`, data)
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch channel details
-async function getChannelById(channelId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getChannelById`, { channelId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch channel announcements
-async function getChannelAnnouncements(channelId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getChannelAnnouncements`, { channelId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch channel assignments
-async function getChannelAssignments(channelId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getChannelAssignments`, { channelId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch channel marks
-async function getChannelMarks(channelId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getChannelMarks`, { channelId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch channel members
-async function getChannelMembers(channelId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getChannelMembers`, { channelId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Update user role
-async function updateUserRole(data = {}) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/updateUserRole`, data)
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Remove a member from a channel
-async function removeMember(data = {}) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/removeMember`, data)
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
-}
-
-// Fetch user details by ID
 async function getUserById(userId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getUserById`, { userId })
-            .then((response) => resolve(response.data))
-            .catch((err) => {
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
+    return axios.post(`${serverConstants.baseURL}/getUserById`, { userId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
 }
-// Fetch user's friends
+
 async function getFriends(userId) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/getFriends`, { userId })
-            .then((response) => {
-                console.log("📡 API Response (getFriends):", response.data);
-                resolve(response.data.data || []);
-            })
-            .catch((err) => {
-                console.error("❌ Error fetching friends:", err.response?.data || err.message);
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
+    return axios.post(`${serverConstants.baseURL}/getFriends`, { userId })
+        .then(res => res.data.data || [])
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
 }
 
-// Add a new friend
 async function addFriend(data) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/addFriend`, data)
-            .then((response) => {
-                console.log("✅ Friend added successfully:", response.data);
-                resolve(response.data);
-            })
-            .catch((err) => {
-                console.error("❌ Error adding friend:", err.response?.data || err.message);
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
+    return axios.post(`${serverConstants.baseURL}/addFriend`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
 }
 
-// Delete a friend
 async function deleteFriend(data) {
-    return new Promise((resolve, reject) => {
-        axios
-            .post(`${serverConstants.baseURL}/deleteFriend`, data)
-            .then((response) => {
-                console.log("✅ Friend deleted successfully:", response.data);
-                resolve(response.data);
-            })
-            .catch((err) => {
-                console.error("❌ Error deleting friend:", err.response?.data || err.message);
-                serverResponseErrActions(err);
-                reject(err);
-            });
-    });
+    return axios.post(`${serverConstants.baseURL}/deleteFriend`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
 }
 
-// Export all functions
+// Channels
+async function getUserChannels(userId) {
+    return axios.post(`${serverConstants.baseURL}/getUserChannels`, { userId })
+        .then(res => res.data.data || [])
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function createChannel(data = {}) {
+    const user = await getUserFromStorage();
+    if (!data.userId) data.userId = user.id;
+    if (!data.profile_picture) {
+        const randomNumber = Math.floor(Math.random() * 30) + 1;
+        data.profile_picture = `https://bizchats.s3.us-east-2.amazonaws.com/channels/wallpapers/generic/Wallpaper+(${randomNumber}).jpg`;
+    }
+    return axios.post(`${serverConstants.baseURL}/createChannel`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function joinChannel(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/joinChannel`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelById(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelById`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelAnnouncements(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelAnnouncements`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelAssignments(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelAssignments`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelMarks(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelMarks`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelMembers(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelMembers`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+// New Functions from Web
+async function createAnnouncement(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/createAnnouncement`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function createAssignment(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/createAssignment`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function createChat(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/createChat`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChats(userId) {
+    return axios.post(`${serverConstants.baseURL}/getChats`, { userId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function updateUserEmail(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/updateUserEmail`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function resetUserPassword(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/resetUserPassword`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function updateProfilePicture(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/updateProfilePicture`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function getChannelMessages(channelId) {
+    return axios.post(`${serverConstants.baseURL}/getChannelMessages`, { channelId })
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function updateUserRole(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/updateUserRole`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+async function removeMember(data = {}) {
+    return axios.post(`${serverConstants.baseURL}/removeMember`, data)
+        .then(res => res.data)
+        .catch(err => {
+            serverResponseErrActions(err);
+            throw err;
+        });
+}
+
+// Export everything
 const sqlService = {
     login,
     signup,
     logout,
     getAllUsers,
+    getUserById,
     getUserChannels,
-    getFriends,
-    addFriend,
-    deleteFriend,
     createChannel,
     joinChannel,
     getChannelById,
@@ -340,7 +301,17 @@ const sqlService = {
     getChannelMembers,
     updateUserRole,
     removeMember,
-    getUserById,
+    addFriend,
+    getFriends,
+    deleteFriend,
+    createAnnouncement,
+    createAssignment,
+    createChat,
+    getChats,
+    updateUserEmail,
+    resetUserPassword,
+    updateProfilePicture,
+    getChannelMessages
 };
 
 export default sqlService;
