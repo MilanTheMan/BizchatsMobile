@@ -2,6 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 
 const HomeScreen = ({ navigation }) => {
+  const handleNavigate = (category) => {
+    navigation.navigate('ChannelsScreen', { category });
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -11,7 +15,6 @@ const HomeScreen = ({ navigation }) => {
           style={styles.logo}
         />
         <Text style={styles.headerText}>Welcome to BizChats</Text>
-
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
           <Image
             source={require('../../assets/profile_icon.png')}
@@ -27,7 +30,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.categoriesContainer}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('PersonalScreen')}
+          onPress={() => handleNavigate('personal')}
         >
           <Image
             source={require('../../assets/personal.png')}
@@ -38,7 +41,7 @@ const HomeScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('EducationalScreen')}
+          onPress={() => handleNavigate('educational')}
         >
           <Image
             source={require('../../assets/educational.png')}
@@ -49,7 +52,7 @@ const HomeScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('ProfessionalScreen')}
+          onPress={() => handleNavigate('professional')}
         >
           <Image
             source={require('../../assets/professional.png')}
@@ -64,8 +67,6 @@ const HomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-
-  // Header Styling
   header: {
     backgroundColor: '#007AFF',
     flexDirection: 'row',
@@ -82,8 +83,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   profileIcon: { width: 40, height: 40 },
-
-  // Section Title
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -91,8 +90,6 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     textAlign: 'center',
   },
-
-  // Categories Container
   categoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

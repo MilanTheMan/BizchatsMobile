@@ -6,9 +6,7 @@ import { UserProvider } from './context/UserContext';
 import LoginScreen from './src/screens/LoginScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import HomeScreen from './src/screens/HomeScreen';
-import EducationalScreen from './src/screens/EducationalScreen';
-import PersonalScreen from './src/screens/PersonalScreen';
-import ProfessionalScreen from './src/screens/ProfessionalScreen';
+import ChannelsScreen from './src/screens/ChannelsScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import GeneralChatScreen from './src/screens/GeneralChatScreen';
 import AssignmentsScreen from './src/screens/AssignmentsScreen';
@@ -37,9 +35,7 @@ export default function App() {
         }} />
 
         <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="EducationalScreen" component={EducationalScreen} />
-        <Stack.Screen name="PersonalScreen" component={PersonalScreen} />
-        <Stack.Screen name="ProfessionalScreen" component={ProfessionalScreen} />
+        <Stack.Screen name="ChannelsScreen" component={ChannelsScreen} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="GeneralChatScreen" component={GeneralChatScreen} />
         <Stack.Screen name="AssignmentsScreen" component={AssignmentsScreen} />
