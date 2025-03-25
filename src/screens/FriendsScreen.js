@@ -1,42 +1,69 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View,
+  Text,
+  FlatList,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  StyleSheet
+} from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import sqlService from '../../services/sqlService';
-import { UserContext } from '../../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FriendsScreen = () => {
   const navigation = useNavigation();
-  const { user } = useContext(UserContext);
+  const isFocused = useIsFocused(); // 👈 This tracks screen focus
+
+  const [user, setUser] = useState(null);
   const [friends, setFriends] = useState([]);
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFriends = async () => {
-      if (!user?.id) return;
-
-      try {
-        console.log(`📡 Fetching friends for user ${user.id}`);
-        const response = await sqlService.getFriends(user.id);
-        setFriends(response.data || []);
-      } catch (error) {
-        console.error("❌ Error fetching friends:", error);
-      } finally {
-        setLoading(false);
-      }
+    const init = async () => {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (!storedUser) return;
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      fetchFriends(parsedUser.id);
     };
 
-    fetchFriends();
-  }, [user]);
+    if (isFocused) {
+      init();
+    }
+  }, [isFocused]); // 👈 Triggers when screen is re-focused
+
+  const fetchFriends = async (userId) => {
+    try {
+      const response = await sqlService.getFriends(userId);
+      const friendList = Array.isArray(response)
+        ? response
+        : response?.data || [];
+      setFriends(friendList);
+    } catch (error) {
+      console.error("❌ Error fetching friends:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   const handleSearch = async () => {
-    if (!searchId.trim()) return;
+    const numericId = parseInt(searchId);
+    if (isNaN(numericId)) {
+      Alert.alert("Please enter a valid numeric User ID.");
+      return;
+    }
 
     try {
-      const response = await sqlService.getUserById(searchId);
-      if (response.data && response.data.length > 0) {
+      const response = await sqlService.getUserById(numericId);
+      if (response?.data?.length > 0) {
         setSearchResult(response.data[0]);
       } else {
         Alert.alert("User not found");
@@ -76,13 +103,14 @@ const FriendsScreen = () => {
         <Text style={styles.headerText}>Friends</Text>
       </View>
 
-      {/* Search for Friends */}
+      {/* Search Input */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.input}
           placeholder="Enter User ID"
           value={searchId}
           onChangeText={setSearchId}
+          keyboardType="numeric"
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Text style={styles.searchText}>Search</Text>
@@ -101,7 +129,7 @@ const FriendsScreen = () => {
 
       {/* Friends List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#34A853" style={styles.loader} />
+        <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
       ) : friends.length === 0 ? (
         <Text style={styles.emptyText}>You have no friends yet.</Text>
       ) : (
@@ -110,7 +138,10 @@ const FriendsScreen = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Image source={{ uri: item.profilePicture || 'https://via.placeholder.com/50' }} style={styles.profilePicture} />
+              <Image
+                source={{ uri: item.profilePicture || 'https://via.placeholder.com/50' }}
+                style={styles.profilePicture}
+              />
               <View style={styles.cardContent}>
                 <Text style={styles.title}>{item.name}</Text>
                 <Text style={styles.status}>{item.email}</Text>
@@ -138,7 +169,7 @@ const FriendsScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5', padding: 10 },
   header: {
-    backgroundColor: '#34A853',
+    backgroundColor: '#007AFF',
     paddingVertical: 15,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -146,18 +177,24 @@ const styles = StyleSheet.create({
   headerText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   searchContainer: { flexDirection: 'row', marginVertical: 10 },
   input: { flex: 1, borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 5 },
-  searchButton: { backgroundColor: '#34A853', padding: 10, borderRadius: 5, marginLeft: 10 },
+  searchButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5, marginLeft: 10 },
   searchText: { color: '#fff', fontWeight: 'bold' },
-  searchResult: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, backgroundColor: '#fff', borderRadius: 10, marginVertical: 5 },
+  searchResult: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: 10, backgroundColor: '#fff', borderRadius: 10, marginVertical: 5
+  },
   addButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5 },
   addText: { color: '#fff', fontWeight: 'bold' },
   loader: { marginTop: 20 },
-  card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 10, padding: 15, marginVertical: 5, alignItems: 'center' },
+  card: {
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 10,
+    padding: 15, marginVertical: 5, alignItems: 'center'
+  },
   profilePicture: { width: 50, height: 50, borderRadius: 25, marginRight: 10 },
   cardContent: { flex: 1 },
   title: { fontSize: 16, fontWeight: 'bold' },
   status: { fontSize: 14, color: '#666' },
-  chatButton: { backgroundColor: '#34A853', padding: 10, borderRadius: 5, marginRight: 5 },
+  chatButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5, marginRight: 5 },
   removeButton: { backgroundColor: '#d9534f', padding: 10, borderRadius: 5 },
   emptyText: { textAlign: 'center', fontSize: 16, color: '#888', marginTop: 20 },
 });

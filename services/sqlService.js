@@ -79,12 +79,12 @@ async function getAllUsers(data = {}) {
 }
 
 async function getUserById(userId) {
-    return axios.post(`${serverConstants.baseURL}/getUserById`, { userId })
-        .then(res => res.data)
-        .catch(err => {
-            serverResponseErrActions(err);
-            throw err;
-        });
+  return axios.post(`${serverConstants.baseURL}/getUserById`, { data: userId }) // 👈 match web format
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
 }
 
 async function getFriends(userId) {
