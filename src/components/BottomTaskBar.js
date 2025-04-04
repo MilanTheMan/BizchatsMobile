@@ -1,19 +1,47 @@
 import React from 'react';
 import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 
-const BottomTaskBar = ({ navigation, currentClassName }) => {
+const BottomTaskBar = ({ navigation, currentClassName, currentClassId }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('GeneralChatScreen', { className: currentClassName })}>
+      {/* 🟦 General Chat */}
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('GeneralChatScreen', {
+            className: currentClassName,
+            channelId: currentClassId,
+          })
+        }
+      >
         <Image source={require('../../assets/chat_icon.png')} style={styles.icon} />
       </TouchableOpacity>
+
+      {/* 👥 Friends */}
       <TouchableOpacity onPress={() => navigation.navigate('Friends')}>
         <Image source={require('../../assets/meeting.png')} style={styles.icon} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('AssignmentsScreen', { className: currentClassName })}>
+
+      {/* 📘 Assignments */}
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('AssignmentsScreen', {
+            className: currentClassName,
+            channelId: currentClassId, // ✅ Required by mobile screen
+          })
+        }
+      >
         <Image source={require('../../assets/assignments.png')} style={styles.icon} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Marks')}>
+
+      {/* 🎯 Marks/Grades */}
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('Marks', {
+            className: currentClassName,
+            channelId: currentClassId,
+          })
+        }
+      >
         <Image source={require('../../assets/marks.png')} style={styles.icon} />
       </TouchableOpacity>
     </View>

@@ -1,146 +1,230 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import sqlService from '../../services/sqlService';
 
 const AssignmentsScreen = ({ route }) => {
-  const { className = 'General' } = route.params || {};
-  const formattedClassName = className.includes('Class') ? className : `${className} Class`;
+  const { channelId, className } = route.params;
 
   const [assignments, setAssignments] = useState([]);
-  const [newAssignment, setNewAssignment] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
+  const [comment, setComment] = useState('');
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Load assignments from AsyncStorage when screen opens
   useEffect(() => {
-    loadAssignments();
-  }, []);
+    if (channelId) {
+      console.log('📡 Fetching assignments for channel:', channelId);
+      fetchAssignments();
+    }
+  }, [channelId]);
 
-  const loadAssignments = async () => {
+  const fetchAssignments = async () => {
+    setLoading(true);
     try {
-      const storedData = await AsyncStorage.getItem(`assignments_${className}`);
-      if (storedData) {
-        setAssignments(JSON.parse(storedData));
+      const res = await sqlService.getChannelAssignments(channelId);
+      console.log('📥 Raw assignments from backend:', res.data);
+      setAssignments(res.data || []);
+    } catch (err) {
+      console.error('❌ Failed to load assignments:', err);
+      Alert.alert('Error', 'Could not load assignments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+    if (!result.canceled) {
+      setFile(result.assets[0]);
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId) => {
+    if (!comment && !file) {
+      Alert.alert('Empty Submission', 'Please enter a comment or upload a file');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('assignmentId', assignmentId);
+      formData.append('comment', comment);
+      if (file) {
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType || 'application/octet-stream',
+        });
       }
-    } catch (error) {
-      console.error('Failed to load assignments:', error);
+
+      await sqlService.submitAssignment(formData);
+      Alert.alert('Success', 'Assignment submitted!');
+      setComment('');
+      setFile(null);
+      setExpandedId(null);
+    } catch (err) {
+      console.error('❌ Failed to submit assignment:', err);
+      Alert.alert('Error', 'Could not submit assignment');
     }
   };
 
-  const saveAssignments = async (updatedAssignments) => {
-    try {
-      await AsyncStorage.setItem(`assignments_${className}`, JSON.stringify(updatedAssignments));
-    } catch (error) {
-      console.error('Failed to save assignments:', error);
-    }
-  };
+  const renderItem = ({ item }) => {
+    const isExpanded = expandedId === item.id;
+    const formattedDueDate = item.due_date
+      ? new Date(item.due_date).toLocaleString()
+      : 'No due date';
+    const formattedCreatedDate = item.creation_date
+      ? new Date(item.creation_date).toLocaleString()
+      : '';
 
-  const addAssignment = () => {
-    if (!newAssignment.trim()) {
-      Alert.alert('Error', 'Assignment title cannot be empty');
-      return;
-    }
-    if (!dueDate.trim()) {
-      Alert.alert('Error', 'Due date cannot be empty');
-      return;
-    }
+    return (
+      <View style={styles.card}>
+        <TouchableOpacity
+          onPress={() => setExpandedId(isExpanded ? null : item.id)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.assignmentTitle}>{item.title}</Text>
+          <Text style={styles.assignmentDesc}>{item.description}</Text>
+          <Text style={styles.assignmentDue}>Due: {formattedDueDate}</Text>
+          <Text style={styles.assignmentCreated}>Posted: {formattedCreatedDate}</Text>
+        </TouchableOpacity>
 
-    const newEntry = {
-      id: (assignments.length + 1).toString(),
-      title: newAssignment,
-      dueDate: dueDate,
-    };
-
-    const updatedAssignments = [...assignments, newEntry];
-    setAssignments(updatedAssignments);
-    saveAssignments(updatedAssignments);
-
-    setNewAssignment('');
-    setDueDate('');
-    Alert.alert('Success', 'Assignment added successfully!');
-  };
-
-  // ✅ Delete an assignment
-  const deleteAssignment = (id) => {
-    const updatedAssignments = assignments.filter((item) => item.id !== id);
-    setAssignments(updatedAssignments);
-    saveAssignments(updatedAssignments);
-    Alert.alert('Deleted', 'Assignment removed successfully!');
+        {isExpanded && (
+          <View style={styles.submissionSection}>
+            <TextInput
+              placeholder="Add a comment..."
+              value={comment}
+              onChangeText={setComment}
+              style={styles.input}
+              multiline
+            />
+            <TouchableOpacity style={styles.fileButton} onPress={pickDocument}>
+              <Text style={styles.fileButtonText}>
+                {file ? file.name : 'Choose File'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => handleSubmitAssignment(item.id)}
+            >
+              <Text style={styles.submitText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{formattedClassName} Assignments</Text>
+      <Text style={styles.heading}>{className} Assignments</Text>
 
-      {/* Assignments List */}
-      <FlatList
-        data={assignments}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.assignmentItem}>
-            <View style={styles.assignmentText}>
-              <Text style={styles.assignmentTitle}>{item.title}</Text>
-              <Text style={styles.dueDate}>Due: {item.dueDate}</Text>
-            </View>
-            {/* Delete Button */}
-            <TouchableOpacity style={styles.deleteButton} onPress={() => deleteAssignment(item.id)}>
-              <Text style={styles.deleteText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyText}>No assignments available.</Text>}
-      />
-
-      {/* Add New Assignment Section */}
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Assignment Title"
-        value={newAssignment}
-        onChangeText={setNewAssignment}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Due Date (e.g., Feb 15, 2025)"
-        value={dueDate}
-        onChangeText={setDueDate}
-      />
-      <Button title="Add Assignment" onPress={addAssignment} />
+      {!channelId ? (
+        <Text style={styles.error}>❌ Missing channelId. Cannot load assignments.</Text>
+      ) : loading ? (
+        <ActivityIndicator size="large" style={{ marginTop: 30 }} />
+      ) : (
+        <FlatList
+          data={assignments}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No assignments available.</Text>
+          }
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  assignmentItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 10,
-    elevation: 3,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  container: { flex: 1, padding: 16, backgroundColor: '#f9f9f9' },
+  heading: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 16,
   },
-  assignmentText: { flex: 1 },
-  assignmentTitle: { fontSize: 18, fontWeight: 'bold' },
-  dueDate: { fontSize: 14, color: '#666' },
-  emptyText: { textAlign: 'center', fontSize: 16, color: '#888', marginTop: 20 },
+  card: {
+    backgroundColor: '#e6edff',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 10,
+    marginHorizontal: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  assignmentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#333',
+  },
+  assignmentDesc: {
+    fontSize: 15,
+    color: '#555',
+    marginBottom: 6,
+  },
+  assignmentDue: {
+    fontSize: 13,
+    color: '#007AFF',
+    marginBottom: 2,
+  },
+  assignmentCreated: {
+    fontSize: 13,
+    color: '#007AFF',
+  },
+  submissionSection: { marginTop: 16 },
   input: {
-    height: 40,
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 6,
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 5,
     marginBottom: 10,
-    paddingHorizontal: 10,
-    backgroundColor: '#fff',
+    minHeight: 60,
   },
-  deleteButton: {
-    backgroundColor: '#ff4d4d',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
+  fileButton: {
+    backgroundColor: '#ddd',
+    padding: 10,
     borderRadius: 5,
+    alignItems: 'center',
   },
-  deleteText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  fileButtonText: { color: '#333' },
+  submitButton: {
+    backgroundColor: '#28a745',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  submitText: { color: '#fff', fontWeight: 'bold' },
+  empty: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 30,
+    fontStyle: 'italic',
+  },
+  error: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: 'red',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default AssignmentsScreen;

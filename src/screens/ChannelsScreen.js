@@ -80,7 +80,7 @@ const ChannelsScreen = ({ route, navigation }) => {
   };
 
   const renderChannel = ({ item }) => {
-    let imageUri = require('../../assets/math.png'); // fallback default
+    let imageUri = require('../../assets/math.png');
 
     if (item.profile_picture) {
       if (typeof item.profile_picture === 'string') {

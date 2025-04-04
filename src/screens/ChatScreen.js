@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import sqlService from '../../services/sqlService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 const ChatScreen = ({ route }) => {
   const { friendId, friendName } = route.params;
@@ -72,22 +73,17 @@ const ChatScreen = ({ route }) => {
     return (
       <View
         style={[
-          styles.messageBubble,
+          styles.messageContainer,
           isOwnMessage ? styles.myMessage : styles.friendMessage
         ]}
       >
-        <Text style={styles.messageSender}>
-          {isOwnMessage ? 'You' : friendName}
-        </Text>
         <Text style={styles.messageText}>{item.content}</Text>
-        {item.creation_date && (
-          <Text style={styles.messageTime}>
-            {new Date(item.creation_date).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
-        )}
+        <Text style={styles.messageTime}>
+          {new Date(item.creation_date).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </Text>
       </View>
     );
   };
@@ -97,25 +93,32 @@ const ChatScreen = ({ route }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.friendName}>{friendName}</Text>
+      </View>
+
+      {/* Messages */}
       <FlatList
         ref={flatListRef}
         data={messages}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(_, index) => index.toString()}
         renderItem={renderMessage}
         contentContainerStyle={styles.messageList}
         onContentSizeChange={scrollToBottom}
       />
 
+      {/* Input */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           value={newMessage}
           onChangeText={setNewMessage}
           placeholder="Type a message..."
-          placeholderTextColor="#999"
+          placeholderTextColor="#aaa"
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendText}>Send</Text>
+          <Ionicons name="send" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -123,66 +126,77 @@ const ChatScreen = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f0f0' },
-  messageList: { padding: 10, paddingBottom: 60 },
-  messageBubble: {
+  container: { flex: 1, backgroundColor: '#EEF1F6' },
+
+  header: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  friendName: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold'
+  },
+
+  messageList: { padding: 15, paddingBottom: 90 },
+
+  messageContainer: {
     maxWidth: '80%',
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 6
+    padding: 12,
+    borderRadius: 20,
+    marginVertical: 6,
+    marginHorizontal: 10
   },
   myMessage: {
     backgroundColor: '#007AFF',
     alignSelf: 'flex-end',
+    borderTopRightRadius: 0,
   },
   friendMessage: {
-    backgroundColor: '#e1e1e1',
+    backgroundColor: '#fff',
     alignSelf: 'flex-start',
-  },
-  messageSender: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4
+    borderTopLeftRadius: 0,
   },
   messageText: {
-    color: '#000',
     fontSize: 16,
+    color: '#000'
   },
   messageTime: {
     fontSize: 10,
-    color: '#555',
-    marginTop: 4,
-    textAlign: 'right'
+    color: '#888',
+    textAlign: 'right',
+    marginTop: 4
   },
+
   inputContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#fff',
     position: 'absolute',
     bottom: 0,
-    width: '100%'
+    width: '100%',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#ddd',
   },
   input: {
     flex: 1,
-    paddingHorizontal: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
+    backgroundColor: '#F2F2F2',
+    borderRadius: 25,
+    paddingHorizontal: 15,
     height: 40,
-    marginRight: 10,
     color: '#000'
   },
   sendButton: {
+    marginLeft: 10,
     backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    padding: 10,
     borderRadius: 20
-  },
-  sendText: {
-    color: '#fff',
-    fontWeight: 'bold'
   }
 });
 

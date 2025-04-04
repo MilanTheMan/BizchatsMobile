@@ -1,138 +1,219 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, Image
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import sqlService from '../../services/sqlService';
+import { useNavigation } from '@react-navigation/native';
 
 const SettingsScreen = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [user, setUser] = useState(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [profileUri, setProfileUri] = useState(null);
+
   const navigation = useNavigation();
 
   useEffect(() => {
-    loadUserData();
+    loadUser();
   }, []);
 
-  const loadUserData = async () => {
-    try {
-      const storedEmail = await AsyncStorage.getItem('currentUserEmail');
-      const storedUsername = await AsyncStorage.getItem('currentUserUsername');
-      const storedPassword = await AsyncStorage.getItem(`password_${storedEmail}`);
-
-      if (storedEmail) setEmail(storedEmail);
-      if (storedUsername) setUsername(storedUsername);
-      if (storedPassword) setPassword(storedPassword);
-    } catch (error) {
-      console.error('Failed to load user data:', error);
+  const loadUser = async () => {
+    const stored = await AsyncStorage.getItem('user');
+    const parsed = stored ? JSON.parse(stored) : null;
+    if (parsed) {
+      setUser(parsed);
+      setProfileUri(parsed.profile_picture || null);
     }
   };
 
-  const handleUpdate = async () => {
+  const handleEmailUpdate = async () => {
+    if (!newEmail.trim()) return Alert.alert('Please enter a new email');
     try {
-      if (!username.trim() || !email.trim() || !password.trim()) {
-        Alert.alert('Error', 'All fields must be filled.');
-        return;
-      }
-
-      await AsyncStorage.setItem('currentUserEmail', email);
-      await AsyncStorage.setItem('currentUserUsername', username);
-      await AsyncStorage.setItem(`password_${email}`, password);
-
-      Alert.alert('Success', 'Profile updated successfully!');
+      await sqlService.updateUserEmail({ userId: user.id, email: newEmail });
+      setNewEmail('');
+      Alert.alert('Email updated successfully');
+      loadUser();
     } catch (error) {
-      console.error('Error updating user info:', error);
+      Alert.alert('Failed to update email');
+      console.error(error);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!newPassword.trim()) return Alert.alert('Enter a new password');
+    try {
+      await sqlService.resetUserPassword({ userId: user.id, newPassword });
+      setNewPassword('');
+      Alert.alert('Password updated');
+    } catch (error) {
+      Alert.alert('Failed to update password');
+      console.error(error);
+    }
+  };
+
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setProfileUri(uri);
+
+      const formData = new FormData();
+      formData.append('userId', user.id);
+      formData.append('file', {
+        uri,
+        name: 'profile.jpg',
+        type: 'image/jpeg',
+      });
+
+      try {
+        await sqlService.updateProfilePicture(formData);
+        Alert.alert('Profile picture updated');
+        loadUser();
+      } catch (error) {
+        Alert.alert('Upload failed');
+        console.error(error);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.clear();
+    navigation.replace('Login');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Settings</Text>
+      <Text style={styles.header}>Profile Settings</Text>
 
-      <Text style={styles.label}>Username:</Text>
-      <TextInput
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        placeholder="Enter your username"
-      />
-
-      <Text style={styles.label}>Email:</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Enter your email"
-      />
-
-      <Text style={styles.label}>Password:</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry={true}
-        placeholder="Enter your password"
-      />
-
-      <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
-        <Text style={styles.updateButtonText}>Update</Text>
+      <TouchableOpacity onPress={pickImage}>
+        <Image
+          source={
+            profileUri
+              ? { uri: profileUri }
+              : require('../../assets/profile_icon.png')
+          }
+          style={styles.profileImage}
+        />
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.friendsButton}
-        onPress={() => navigation.navigate('Friends')}
-      >
-        <Text style={styles.friendsButtonText}>Friends</Text>
-      </TouchableOpacity>
+      <View style={styles.section}>
+        <Text style={styles.label}>Email: {user?.email}</Text>
 
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={async () => {
-          await AsyncStorage.clear();
-          navigation.replace('Login');
-        }}
-      >
-        <Text style={styles.logoutButtonText}>Logout</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="New email"
+          value={newEmail}
+          onChangeText={setNewEmail}
+        />
+        <TouchableOpacity style={styles.blueButton} onPress={handleEmailUpdate}>
+          <Text style={styles.buttonText}>Change Email</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="New password"
+            secureTextEntry={!showPassword}
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={24}
+              color="#ccc"
+              style={{ marginLeft: 10 }}
+            />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.greenButton} onPress={handlePasswordReset}>
+          <Text style={styles.buttonText}>Update Password</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+const BLUE = '#007AFF';
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 20 },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#007AFF' },
-  label: { fontSize: 16, fontWeight: 'bold', marginBottom: 5, color: '#333' },
+  container: {
+    flex: 1, padding: 20, backgroundColor: '#f9fafb',
+  },
+  header: {
+    fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#111',
+  },
+  section: {
+    marginVertical: 15,
+  },
+  label: {
+    marginBottom: 8,
+    fontSize: 16,
+    color: '#333',
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#000',
+  },
+  blueButton: {
+    backgroundColor: BLUE,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  greenButton: {
+    backgroundColor: '#10b981',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#ef4444',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+    borderRadius: 50,
+    borderColor: BLUE,
+    borderWidth: 3,
     marginBottom: 20,
   },
-  updateButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+  passwordRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
   },
-  updateButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  friendsButton: {
-    backgroundColor: '#34A853',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  friendsButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  logoutButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });
 
 export default SettingsScreen;

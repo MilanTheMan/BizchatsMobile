@@ -1,27 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View,
-  Text,
-  FlatList,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  StyleSheet
+import {
+  View, Text, FlatList, Image, TextInput, TouchableOpacity,
+  ActivityIndicator, Alert, StyleSheet
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import sqlService from '../../services/sqlService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FriendsScreen = () => {
   const navigation = useNavigation();
-  const isFocused = useIsFocused(); // 👈 This tracks screen focus
+  const isFocused = useIsFocused();
 
   const [user, setUser] = useState(null);
   const [friends, setFriends] = useState([]);
-  const [searchId, setSearchId] = useState('');
-  const [searchResult, setSearchResult] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,15 +29,20 @@ const FriendsScreen = () => {
     if (isFocused) {
       init();
     }
-  }, [isFocused]); // 👈 Triggers when screen is re-focused
+  }, [isFocused]);
 
   const fetchFriends = async (userId) => {
     try {
       const response = await sqlService.getFriends(userId);
-      const friendList = Array.isArray(response)
-        ? response
-        : response?.data || [];
-      setFriends(friendList);
+      const friendList = Array.isArray(response) ? response : response?.data || [];
+
+      // Filter duplicates by id
+      const uniqueFriends = friendList.filter(
+        (friend, index, self) =>
+          index === self.findIndex((f) => f.id === friend.id)
+      );
+
+      setFriends(uniqueFriends);
     } catch (error) {
       console.error("❌ Error fetching friends:", error);
     } finally {
@@ -52,33 +50,34 @@ const FriendsScreen = () => {
     }
   };
 
-
-
   const handleSearch = async () => {
-    const numericId = parseInt(searchId);
-    if (isNaN(numericId)) {
-      Alert.alert("Please enter a valid numeric User ID.");
-      return;
-    }
+    if (!searchInput.trim()) return;
 
     try {
-      const response = await sqlService.getUserById(numericId);
-      if (response?.data?.length > 0) {
-        setSearchResult(response.data[0]);
-      } else {
-        Alert.alert("User not found");
-      }
+      const response = await sqlService.getAllUsers();
+      const filtered = response?.data?.filter(
+        (userItem) =>
+          userItem.name?.toLowerCase().includes(searchInput.toLowerCase()) &&
+          userItem.id !== user?.id
+      );
+
+      setSearchResults(filtered);
     } catch (error) {
-      console.error("❌ Error searching user:", error);
-      Alert.alert("Error searching user");
+      console.error("❌ Error during search:", error);
+      Alert.alert("Search failed");
     }
   };
 
   const handleAddFriend = async (friendId) => {
+    if (friends.some((f) => f.id === friendId)) {
+      Alert.alert("You're already friends with this user.");
+      return;
+    }
+
     try {
       await sqlService.addFriend({ user_id: user.id, friend_id: friendId });
-      setFriends([...friends, searchResult]);
-      setSearchResult(null);
+      const addedFriend = searchResults.find((u) => u.id === friendId);
+      if (addedFriend) setFriends((prev) => [...prev, addedFriend]);
       Alert.alert("Friend added successfully");
     } catch (error) {
       console.error("❌ Error adding friend:", error);
@@ -86,80 +85,71 @@ const FriendsScreen = () => {
     }
   };
 
-  const handleDeleteFriend = async (friendId) => {
-    try {
-      await sqlService.deleteFriend({ user_id: user.id, friend_id: friendId });
-      setFriends(friends.filter(friend => friend.id !== friendId));
-      Alert.alert("Friend removed");
-    } catch (error) {
-      console.error("❌ Error removing friend:", error);
-      Alert.alert("Failed to remove friend");
-    }
-  };
+  const renderFriendItem = ({ item }) => (
+    <View style={styles.friendCard}>
+      <View>
+        <Text style={styles.friendName}>{item.name}</Text>
+        <Text style={styles.friendEmail}>{item.email}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.chatButton}
+        onPress={() =>
+          navigation.navigate('ChatScreen', { friendId: item.id, friendName: item.name })
+        }
+      >
+        <Text style={{ color: 'white' }}>Chat</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Friends</Text>
-      </View>
+      <Text style={styles.header}>Friends</Text>
 
-      {/* Search Input */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Enter User ID"
-          value={searchId}
-          onChangeText={setSearchId}
-          keyboardType="numeric"
+          placeholder="Enter name"
+          value={searchInput}
+          onChangeText={setSearchInput}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Text style={styles.searchText}>Search</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search Result */}
-      {searchResult && (
-        <View style={styles.searchResult}>
-          <Text>{searchResult.name} ({searchResult.email})</Text>
-          <TouchableOpacity style={styles.addButton} onPress={() => handleAddFriend(searchResult.id)}>
-            <Text style={styles.addText}>Add Friend</Text>
-          </TouchableOpacity>
-        </View>
+      {/* 🔍 Search Results */}
+      {searchResults.length > 0 && (
+        <>
+          <Text style={styles.subHeader}>Search Results</Text>
+          {searchResults.map((result) => (
+            <View key={result.id} style={styles.friendCard}>
+              <View>
+                <Text style={styles.friendName}>{result.name}</Text>
+                <Text style={styles.friendEmail}>{result.email}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => handleAddFriend(result.id)}
+              >
+                <Text style={{ color: '#fff' }}>Add Friend</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </>
       )}
 
-      {/* Friends List */}
+      {/* 🧑‍🤝‍🧑 Friend List */}
+      <Text style={styles.subHeader}>Your Friends</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
+        <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 10 }} />
       ) : friends.length === 0 ? (
-        <Text style={styles.emptyText}>You have no friends yet.</Text>
+        <Text style={styles.noFriends}>You have no friends yet.</Text>
       ) : (
         <FlatList
           data={friends}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image
-                source={{ uri: item.profilePicture || 'https://via.placeholder.com/50' }}
-                style={styles.profilePicture}
-              />
-              <View style={styles.cardContent}>
-                <Text style={styles.title}>{item.name}</Text>
-                <Text style={styles.status}>{item.email}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.chatButton}
-                onPress={() => navigation.navigate('ChatScreen', { friendId: item.id, friendName: item.name })}
-              >
-                <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => handleDeleteFriend(item.id)}
-              >
-                <Ionicons name="trash" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          )}
+          renderItem={renderFriendItem}
         />
       )}
     </View>
@@ -167,36 +157,76 @@ const FriendsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 10 },
+  container: { flex: 1, backgroundColor: '#f2f2f2', padding: 15 },
   header: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  subHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginVertical: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  searchButton: {
     backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    padding: 10,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  searchText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  friendCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    backgroundColor: '#e6f0ff',
+    borderRadius: 8,
+    marginBottom: 8,
     alignItems: 'center',
   },
-  headerText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  searchContainer: { flexDirection: 'row', marginVertical: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 5 },
-  searchButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5, marginLeft: 10 },
-  searchText: { color: '#fff', fontWeight: 'bold' },
-  searchResult: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 10, backgroundColor: '#fff', borderRadius: 10, marginVertical: 5
+  friendName: {
+    fontWeight: 'bold',
+    fontSize: 15,
   },
-  addButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5 },
-  addText: { color: '#fff', fontWeight: 'bold' },
-  loader: { marginTop: 20 },
-  card: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 10,
-    padding: 15, marginVertical: 5, alignItems: 'center'
+  friendEmail: {
+    fontSize: 13,
+    color: '#555',
   },
-  profilePicture: { width: 50, height: 50, borderRadius: 25, marginRight: 10 },
-  cardContent: { flex: 1 },
-  title: { fontSize: 16, fontWeight: 'bold' },
-  status: { fontSize: 14, color: '#666' },
-  chatButton: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5, marginRight: 5 },
-  removeButton: { backgroundColor: '#d9534f', padding: 10, borderRadius: 5 },
-  emptyText: { textAlign: 'center', fontSize: 16, color: '#888', marginTop: 20 },
+  chatButton: {
+    backgroundColor: 'green',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  noFriends: {
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 10,
+  },
 });
 
 export default FriendsScreen;

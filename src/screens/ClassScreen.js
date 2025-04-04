@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react
 import BottomTaskBar from '../components/BottomTaskBar';
 
 const ClassScreen = ({ route, navigation }) => {
-  const { className } = route.params;
+  const { className, classId } = route.params;
 
   const items = [
     {
@@ -34,7 +34,7 @@ const ClassScreen = ({ route, navigation }) => {
       {/* Header Section */}
       <View style={styles.header}>
         <Text style={styles.headerText}>{className} Grades</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.settingsIcon}>
+        <TouchableOpacity onPress={() => navigation.navigate('ChannelSettingsScreen', { channelId: classId, className })}>
           <Image source={require('../../assets/settings.png')} style={styles.icon} />
         </TouchableOpacity>
       </View>
@@ -55,8 +55,12 @@ const ClassScreen = ({ route, navigation }) => {
         keyExtractor={(item) => item.id}
       />
 
-      {/* Bottom Taskbar - Pass Current Class Name */}
-      <BottomTaskBar navigation={navigation} currentClassName={className} />
+      {/* ✅ Bottom Taskbar */}
+      <BottomTaskBar
+        navigation={navigation}
+        currentClassName={className}
+        currentClassId={classId}
+      />
     </View>
   );
 };
@@ -66,7 +70,7 @@ const styles = StyleSheet.create({
 
   // Header Styling
   header: {
-    backgroundColor: '#007AFF', // Changed to blue
+    backgroundColor: '#007AFF',
     paddingVertical: 15,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -94,7 +98,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     alignItems: 'center',
   },
-  cardIcon: { width: 50, height: 50, marginRight: 15, tintColor: '#007AFF' }, // Changed tint color to blue
+  cardIcon: { width: 50, height: 50, marginRight: 15, tintColor: '#007AFF' },
   cardContent: { flex: 1 },
   title: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   date: { fontSize: 14, color: '#666', marginBottom: 5 },
