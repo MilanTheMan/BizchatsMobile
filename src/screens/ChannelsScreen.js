@@ -94,7 +94,25 @@ const ChannelsScreen = ({ route, navigation }) => {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate('Class', { className: item.name, classId: item.id })}
+        onPress={() => {
+              if (category === 'personal') {
+                navigation.navigate('PersonalScreen', {
+                  className: item.name,
+                  classId: item.id,
+                });
+              } else if (category === 'professional') {
+                navigation.navigate('ProfessionalScreen', {
+                  className: item.name,
+                  classId: item.id,
+                });
+              } else {
+                navigation.navigate('Class', {
+                  className: item.name,
+                  classId: item.id,
+                });
+              }
+            }}
+
       >
         <Image source={imageUri} style={styles.image} />
         <View style={styles.textContainer}>

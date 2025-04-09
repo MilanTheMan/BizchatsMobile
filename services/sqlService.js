@@ -7,7 +7,7 @@ axios.defaults.withCredentials = false;
 
 async function getUserFromStorage() {
   try {
-    const user = await AsyncStorage.getItem('user');
+    const user = await AsyncStorage.getItem("user");
     return user ? JSON.parse(user) : null;
   } catch (error) {
     console.error("Failed to retrieve user from storage:", error);
@@ -22,7 +22,7 @@ async function login(data = {}) {
     if (response.data && response.data.data) {
       let userData = response.data.data;
       delete userData.password;
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
       return { success: true, data: userData };
     } else {
       throw new Error("Invalid response format");
@@ -37,12 +37,12 @@ async function login(data = {}) {
 async function signup(data = {}) {
   try {
     const response = await axios.post(`${serverConstants.baseURL}/signup`, data, {
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
     if (response.data && response.data.data) {
       let userData = response.data.data;
       delete userData.password;
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
       return { success: true, data: userData };
     } else {
       throw new Error("Invalid response format");
@@ -51,14 +51,14 @@ async function signup(data = {}) {
     console.error("Signup Error:", error.response?.data || error.message);
     return {
       success: false,
-      message: error.response?.data?.message || "Signup failed. Please try again."
+      message: error.response?.data?.message || "Signup failed. Please try again.",
     };
   }
 }
 
 async function logout() {
   try {
-    await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem("user");
   } catch (error) {
     console.error("Failed to clear user session:", error);
   }
@@ -86,29 +86,23 @@ async function getUserById(userId) {
     });
 }
 
-// ✅ NEW — Search by Name
 async function searchUsersByName(name) {
-  try {
-    const user = await getUserFromStorage();
-    const response = await axios.post(`${serverConstants.baseURL}/getAllUsers`, {
-      data: { name, user }
-    });
-    return response.data;
-  } catch (err) {
-    serverResponseErrActions(err);
-    throw err;
-  }
-}
-
-async function getFriends(userId) {
-  return axios.post(`${serverConstants.baseURL}/getFriends`, { user_id: userId })
-    .then(res => res.data.data || [])
+  return axios.post(`${serverConstants.baseURL}/searchUsersByName`, { name })
+    .then(res => res.data)
     .catch(err => {
       serverResponseErrActions(err);
       throw err;
     });
 }
 
+async function getFriends(userId) {
+  return axios.post(`${serverConstants.baseURL}/getFriends`, { userId })
+    .then(res => res.data.data || [])
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
 
 async function addFriend(data) {
   return axios.post(`${serverConstants.baseURL}/addFriend`, data)
@@ -207,6 +201,84 @@ async function getChannelMembers(channelId) {
     });
 }
 
+// New Features
+async function deleteAnnouncement(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/deleteAnnouncement`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function updateAnnouncement(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/updateAnnouncement`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function deleteAssignment(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/deleteAssignment`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function updateAssignment(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/updateAssignment`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function uploadAttachment(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/uploadAttachment`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function addComment(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/addComment`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function getSubmissionDetails(userId, assignmentId) {
+  return axios.post(`${serverConstants.baseURL}/getSubmissionDetails`, { userId, assignmentId })
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function submitMark(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/submitMark`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function getSubmissions(channelId) {
+  return axios.post(`${serverConstants.baseURL}/getSubmissions`, { channelId })
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function submitResults(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/submitResults`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+async function updateChannel(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/updateChannel`, data)
+    .then(res => res.data)
+    .catch(err => { serverResponseErrActions(err); throw err; });
+}
+
+// Messaging
+async function createChannelMessage(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/createChannelMessage`, data)
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
 async function createAnnouncement(data = {}) {
   return axios.post(`${serverConstants.baseURL}/createAnnouncement`, data)
     .then(res => res.data)
@@ -282,16 +354,6 @@ async function getChannelMessages(channelId) {
     });
 }
 
-async function createChannelMessage(data = {}) {
-  return axios.post(`${serverConstants.baseURL}/createChannelMessage`, data)
-    .then(res => res.data)
-    .catch(err => {
-      serverResponseErrActions(err);
-      throw err;
-    });
-}
-
-
 async function updateUserRole(data = {}) {
   return axios.post(`${serverConstants.baseURL}/updateUserRole`, data)
     .then(res => res.data)
@@ -322,8 +384,7 @@ async function updateChannelName(data = {}) {
 async function updateChannelPicture(formData) {
   return axios.post(`${serverConstants.baseURL}/updateChannelPicture`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
-  })
-    .then(res => res.data)
+  }).then(res => res.data)
     .catch(err => {
       serverResponseErrActions(err);
       throw err;
@@ -339,13 +400,95 @@ async function getChannel(channelId) {
     });
 }
 
+async function getChannelEvents(channelId) {
+  return axios.post(`${serverConstants.baseURL}/getChannelEvents`, { channelId })
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+async function createChannelEvent(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/createChannelEvent`, data)
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+async function deleteChannelEvent({ eventId }) {
+  return axios.post(`${serverConstants.baseURL}/deleteChannelEvent`, { eventId })
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+
+async function getDocumentCategories(channelId) {
+  return axios.post(`${serverConstants.baseURL}/getDocumentCategories`, { channelId })
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+
+async function getChannelDocuments(channelId, categoryId) {
+  return axios.post(`${serverConstants.baseURL}/getChannelDocuments`, {
+    channelId,
+    categoryId
+  })
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+async function uploadChannelDocument(data = {}) {
+  return axios.post(`${serverConstants.baseURL}/uploadChannelDocument`, data)
+    .then(res => res.data)
+    .catch(err => {
+      serverResponseErrActions(err);
+      throw err;
+    });
+}
+
+function createDocumentCategory(data = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      axios
+        .post(`${serverConstants.baseURL}/createDocumentCategory`, data)
+        .then((response) => {
+          let ret = response.data;
+          resolve(ret);
+        })
+        .catch((err) => {
+          serverResponseErrActions(err);
+          reject(err);
+        });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+
+
+
+// Export all
 const sqlService = {
   login,
   signup,
   logout,
   getAllUsers,
   getUserById,
-  searchUsersByName, // ✅ NEW
+  searchUsersByName,
   getUserChannels,
   createChannel,
   joinChannel,
@@ -361,6 +504,17 @@ const sqlService = {
   deleteFriend,
   createAnnouncement,
   createAssignment,
+  deleteAnnouncement,
+  updateAnnouncement,
+  deleteAssignment,
+  updateAssignment,
+  uploadAttachment,
+  addComment,
+  getSubmissionDetails,
+  submitMark,
+  getSubmissions,
+  submitResults,
+  updateChannel,
   createChat,
   getChats,
   updateUserEmail,
@@ -370,7 +524,14 @@ const sqlService = {
   createChannelMessage,
   updateChannelName,
   updateChannelPicture,
-  getChannel
+  getChannel,
+  getChannelEvents,
+  createChannelEvent,
+  deleteChannelEvent,
+  getDocumentCategories,
+  getChannelDocuments,
+  uploadChannelDocument,
+  createDocumentCategory,
 };
 
 export default sqlService;
